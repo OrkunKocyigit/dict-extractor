@@ -14,6 +14,21 @@ pub struct Options {
     encoding: String,
 }
 
+impl Options {
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+    pub fn delete(&self) -> bool {
+        self.delete
+    }
+    pub fn password(&self) -> &str {
+        &self.password
+    }
+    pub fn encoding(&self) -> &str {
+        &self.encoding
+    }
+}
+
 fn parse_directory(s: &str) -> Result<PathBuf, String> {
     let path_buf = PathBuf::from(s);
     if path_buf.exists() && path_buf.is_dir() {

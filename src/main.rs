@@ -1,9 +1,13 @@
-use crate::command_line::Options;
 use clap::Parser;
 
-mod command_line;
+use crate::command_line::Options;
 
-fn main() {
+mod command_line;
+mod file_scan;
+
+fn main() -> Result<(), anyhow::Error> {
     let options = Options::parse();
-    println!("Hello, world!");
+    let paths = file_scan::read_files(options.path())?;
+    println!("{:?}", paths);
+    Ok(())
 }
