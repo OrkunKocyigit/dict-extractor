@@ -1,8 +1,7 @@
-use clap::Parser;
-use std::env;
-use std::io::Stdout;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
+
+use clap::Parser;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
