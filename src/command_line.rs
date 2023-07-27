@@ -1,5 +1,8 @@
 use clap::Parser;
-use std::path::PathBuf;
+use std::env;
+use std::io::Stdout;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -12,6 +15,8 @@ pub struct Options {
     password: String,
     #[arg(short, long, default_value = "932")]
     encoding: String,
+    #[arg(hide = true, default_value = "7z", value_parser = check_archiver)]
+    archiver: String,
 }
 
 impl Options {
@@ -36,4 +41,19 @@ fn parse_directory(s: &str) -> Result<PathBuf, String> {
     } else {
         Err("Given path is not directory".into())
     }
+}
+
+fn check_archiver(s: &str) -> Result<String, String> {
+    if find_executable(s) {
+        Ok(s.to_string())
+    } else {
+        Err(format!(
+            "{} has to be installed and in path in order to use this program",
+            s
+        ))
+    }
+}
+
+fn find_executable(name: &str) -> bool {
+    Command::new(name).stdout(Stdio::null()).spawn().is_ok()
 }
