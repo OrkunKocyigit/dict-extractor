@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::fmt::Debug;
 use std::fs;
 use std::process::Command;
 use std::sync::Arc;
@@ -27,6 +26,7 @@ fn main() -> Result<(), anyhow::Error> {
             if target_folder.exists() {
                 let _ = fs::remove_dir_all(&target_folder);
             }
+            println!("{} extraction started.", &path.display());
             let child = Command::new("7z")
                 .arg("x")
                 .arg(&path)
@@ -40,11 +40,17 @@ fn main() -> Result<(), anyhow::Error> {
                 .output();
             match child {
                 Ok(c) => {
-                    if c.status.success() && options.delete() {
-                        let _ = fs::remove_file(&path);
+                    if c.status.success() {
+                        println!("{} has been extracted successfully.", &path.display());
+                        if options.delete() {
+                            match fs::remove_file(&path) {
+                                Ok(_) => println!("{} has been deleted.", &path.display()),
+                                _ => println!("{} delete failed", &path.display()),
+                            }
+                        }
                     }
                 }
-                _ => (),
+                _ => println!("{} extracted failed.", &path.display()),
             }
         });
     }
