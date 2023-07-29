@@ -34,11 +34,15 @@ impl Options {
 }
 
 fn parse_directory(s: &str) -> Result<PathBuf, String> {
-    let path_buf = PathBuf::from(s);
-    if path_buf.exists() && path_buf.is_dir() {
-        Ok(path_buf)
-    } else {
-        Err("Given path is not directory".into())
+    match dunce::canonicalize(PathBuf::from(s)) {
+        Ok(p) => {
+            if p.exists() && p.is_dir() {
+                Ok(p)
+            } else {
+                Err("Given path is not directory".into())
+            }
+        }
+        _ => Err("Given path is not directory".into()),
     }
 }
 
