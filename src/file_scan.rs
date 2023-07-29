@@ -1,16 +1,22 @@
 use io::Error;
+use rayon::prelude::*;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
-pub fn read_files<P: AsRef<Path>>(paths: &mut Vec<PathBuf>, path: P) -> Result<(), Error> {
-    for entry in path.as_ref().read_dir()?.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if path.is_file() && is_extension_valid(&path) {
-            paths.push(path);
-        } else if path.is_dir() {
-            read_files(paths, path)?
-        }
-    }
+pub fn read_files<P: AsRef<Path>>(paths: &Mutex<Vec<PathBuf>>, path: P) -> Result<(), Error> {
+    path.as_ref()
+        .read_dir()?
+        .filter_map(|e| e.ok())
+        .par_bridge()
+        .for_each(|entry| {
+            let path = entry.path();
+            if path.is_file() && is_extension_valid(&path) {
+                paths.lock().unwrap().push(path);
+            } else if path.is_dir() {
+                read_files(&paths, path).unwrap();
+            }
+        });
     Ok(())
 }
 

@@ -1,7 +1,7 @@
 use std::cmp::max;
 use std::fs;
 use std::process::Command;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread::available_parallelism;
 
 use clap::Parser;
@@ -14,15 +14,15 @@ mod file_scan;
 
 fn main() -> Result<(), anyhow::Error> {
     let options = Arc::new(Options::parse());
-    let mut paths = Vec::new();
-    file_scan::read_files(&mut paths, options.path())?;
+    let paths = Mutex::new(Vec::new());
+    file_scan::read_files(&paths, options.path())?;
     let default_parallelism_approx = available_parallelism().unwrap().get();
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(max(default_parallelism_approx / 2, 1))
         .build()
         .unwrap();
     pool.install(|| {
-        paths.par_iter().for_each(|path| {
+        paths.lock().unwrap().par_iter().for_each(|path| {
             let options = Arc::clone(&options);
             let parent = path.parent().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
