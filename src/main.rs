@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::thread::available_parallelism;
 
 use clap::Parser;
-use threadpool::ThreadPool;
+use rayon::prelude::*;
 
 use crate::command_line::Options;
 
@@ -16,10 +16,13 @@ fn main() -> Result<(), anyhow::Error> {
     let options = Arc::new(Options::parse());
     let paths = file_scan::read_files(options.path())?;
     let default_parallelism_approx = available_parallelism().unwrap().get();
-    let pool = ThreadPool::new(max(default_parallelism_approx / 2, 1));
-    for path in paths {
-        let options = Arc::clone(&options);
-        pool.execute(move || {
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(max(default_parallelism_approx / 2, 1))
+        .build()
+        .unwrap();
+    pool.install(|| {
+        paths.par_iter().for_each(|path| {
+            let options = Arc::clone(&options);
             let parent = path.parent().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
             let target_folder = parent.join(name);
@@ -55,7 +58,6 @@ fn main() -> Result<(), anyhow::Error> {
                 _ => println!("{} extracted failed.", &path.display()),
             }
         });
-    }
-    pool.join();
+    });
     Ok(())
 }
