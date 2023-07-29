@@ -48,6 +48,8 @@ fn main() -> Result<(), anyhow::Error> {
                                 _ => println!("{} delete failed", &path.display()),
                             }
                         }
+                    } else {
+                        println!("{} extracted failed.", &path.display())
                     }
                 }
                 _ => println!("{} extracted failed.", &path.display()),
