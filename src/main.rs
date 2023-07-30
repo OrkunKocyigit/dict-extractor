@@ -1,8 +1,6 @@
-use std::cmp::max;
 use std::fs;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
-use std::thread::available_parallelism;
 
 use clap::Parser;
 use rayon::prelude::*;
@@ -16,9 +14,8 @@ fn main() -> Result<(), anyhow::Error> {
     let options = Arc::new(Options::parse());
     let paths = Mutex::new(Vec::new());
     file_scan::read_files(&paths, options.path())?;
-    let default_parallelism_approx = available_parallelism().unwrap().get();
     let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(max(default_parallelism_approx / 2, 1))
+        .num_threads(options.workers())
         .build()
         .unwrap();
     pool.install(|| {

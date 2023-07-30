@@ -1,5 +1,7 @@
+use std::cmp::max;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::thread::available_parallelism;
 
 use clap::Parser;
 
@@ -14,6 +16,8 @@ pub struct Options {
     password: String,
     #[arg(short, long, default_value = "932")]
     encoding: String,
+    #[arg(short, long, default_value_t = get_thread_num(), value_parser = parse_thread_count)]
+    workers: usize,
     #[arg(hide = true, default_value = "7z", value_parser = check_archiver)]
     archiver: String,
 }
@@ -30,6 +34,9 @@ impl Options {
     }
     pub fn encoding(&self) -> &str {
         &self.encoding
+    }
+    pub fn workers(&self) -> usize {
+        self.workers
     }
 }
 
@@ -59,4 +66,20 @@ fn check_archiver(s: &str) -> Result<String, String> {
 
 fn find_executable(name: &str) -> bool {
     Command::new(name).stdout(Stdio::null()).spawn().is_ok()
+}
+
+fn parse_thread_count(count: &str) -> Result<usize, String> {
+    let c = count
+        .parse::<usize>()
+        .map_err(|_| "Worker parameter is not valid number.".to_string())?;
+    if c < 1 {
+        Err("Worker parameter cannot be lower than 1".into())
+    } else {
+        Ok(c)
+    }
+}
+
+fn get_thread_num() -> usize {
+    let default_parallelism_approx = available_parallelism().unwrap().get();
+    max(default_parallelism_approx / 2, 1)
 }
