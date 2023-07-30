@@ -12,15 +12,14 @@ mod file_scan;
 
 fn main() -> Result<(), anyhow::Error> {
     let options = Arc::new(Options::parse());
-    let paths = Mutex::new(Vec::new());
-    file_scan::read_files(&paths, options.path())?;
+    let paths = Arc::new(Mutex::new(Vec::new()));
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(options.workers())
         .build()
         .unwrap();
     pool.install(|| {
+        file_scan::read_files(&paths, options.path()).expect("Creating file list failed");
         paths.lock().unwrap().par_iter().for_each(|path| {
-            let options = Arc::clone(&options);
             let parent = path.parent().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
             let target_folder = parent.join(name);
