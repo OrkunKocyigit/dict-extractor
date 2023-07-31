@@ -5,7 +5,7 @@ use std::thread::available_parallelism;
 
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Options {
     #[arg(value_parser = parse_directory)]
@@ -14,8 +14,10 @@ pub struct Options {
     delete: bool,
     #[arg(short, long, default_value = "nowaythisis")]
     password: String,
-    #[arg(short, long, default_value = "932")]
-    encoding: String,
+    #[arg(short, long, default_value_if("no-encoding", "true", "None"))]
+    encoding: Option<String>,
+    #[arg(long, default_value_t = false)]
+    no_encoding: bool,
     #[arg(short, long, default_value_t = get_thread_num(), value_parser = parse_thread_count)]
     workers: usize,
     #[arg(hide = true, default_value = "7z", value_parser = check_archiver)]
@@ -32,7 +34,7 @@ impl Options {
     pub fn password(&self) -> &str {
         &self.password
     }
-    pub fn encoding(&self) -> &str {
+    pub fn encoding(&self) -> &Option<String> {
         &self.encoding
     }
     pub fn workers(&self) -> usize {

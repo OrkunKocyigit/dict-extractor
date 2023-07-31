@@ -27,18 +27,21 @@ fn main() -> Result<(), anyhow::Error> {
                 let _ = fs::remove_dir_all(&target_folder);
             }
             println!("{} extraction started.", &path.display());
-            let child = Command::new("7z")
+            let mut command = Command::new("7z");
+            let mut child = command
                 .arg("x")
                 .arg(&path)
-                .arg(format!("-mcp={}", options.encoding()))
                 .arg(format!(
                     "-o{}",
                     target_folder.into_os_string().into_string().unwrap()
                 ))
                 .arg("-aoa")
-                .arg(format!("-p{}", options.password()))
-                .output();
-            match child {
+                .arg(format!("-p{}", options.password()));
+            if let Some(e) = options.encoding() {
+                child = command.arg(format!("-mcp={}", e))
+            }
+            let output = child.output();
+            match output {
                 Ok(c) => {
                     if c.status.success() {
                         println!("{} has been extracted successfully.", &path.display());
