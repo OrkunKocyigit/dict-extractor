@@ -17,6 +17,7 @@ fn main() -> Result<(), anyhow::Error> {
         .num_threads(options.workers())
         .build()
         .unwrap();
+    dbg!(&options);
     pool.install(|| {
         file_scan::read_files(&paths, options.path()).expect("Creating file list failed");
         paths.lock().unwrap().par_iter().for_each(|path| {

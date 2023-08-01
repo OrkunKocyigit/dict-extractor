@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::thread::available_parallelism;
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -14,10 +14,15 @@ pub struct Options {
     delete: bool,
     #[arg(short, long, default_value = "nowaythisis")]
     password: String,
-    #[arg(short, long, default_value_if("no-encoding", "true", "None"))]
-    encoding: Option<String>,
     #[arg(long, default_value_t = false)]
     no_encoding: bool,
+    #[arg(
+        short,
+        long,
+        default_value_if("no_encoding", "true", None),
+        default_value_if("no_encoding", "false", Some("932"))
+    )]
+    encoding: Option<String>,
     #[arg(short, long, default_value_t = get_thread_num(), value_parser = parse_thread_count)]
     workers: usize,
     #[arg(hide = true, default_value = "7z", value_parser = check_archiver)]
@@ -84,4 +89,22 @@ fn parse_thread_count(count: &str) -> Result<usize, String> {
 fn get_thread_num() -> usize {
     let default_parallelism_approx = available_parallelism().unwrap().get();
     max(default_parallelism_approx / 2, 1)
+}
+
+#[test]
+fn test_options_when_no_encoding_present() {
+    let p = Options::command().get_matches_from(vec!["", "--no-encoding", "./test"]);
+    assert_eq!(p.get_one::<String>("encoding"), None);
+}
+
+#[test]
+fn test_options_when_no_encoding_not_present() {
+    let p = Options::command().get_matches_from(vec!["", "./test"]);
+    assert_eq!(p.get_one::<String>("encoding"), Some(&"932".to_string()));
+}
+
+#[test]
+fn test_options_when_custom_encoding_present() {
+    let p = Options::command().get_matches_from(vec!["", "-e", "123", "./test"]);
+    assert_eq!(p.get_one::<String>("encoding"), Some(&"123".to_string()));
 }
