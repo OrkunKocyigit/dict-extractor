@@ -24,6 +24,10 @@ fn main() -> Result<(), anyhow::Error> {
             let name = path.file_stem().unwrap().to_str().unwrap();
             let target_folder = parent.join(name);
             if target_folder.exists() {
+                println!(
+                    "Target path: {} deleted because it already exists.",
+                    &target_folder.display()
+                );
                 let _ = fs::remove_dir_all(&target_folder);
             }
             println!("{} extraction started.", &path.display());
